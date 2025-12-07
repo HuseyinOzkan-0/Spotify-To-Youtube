@@ -1,15 +1,16 @@
+import os
 from falkordb import FalkorDB
 from .items import Playlist, Track
 
 class FalkorGraphORM:
     def __init__(self):
         # ⚠️ REPLACE WITH YOUR FALKORDB CLOUD DETAILS
-        CLOUD_HOST = 'r-6jissuruar.instance-nrapyhgxj.hc-20vidasdi.us-central1.gcp.f2e0a955bb84.cloud'  # Check your Dashboard
-        CLOUD_PORT = 59832                           # Check your Dashboard
-        CLOUD_PASSWORD = 'StoY_1'         # Click the Eye icon to see it
+        # Connect using environment variables
+        host = os.getenv('FALKORDB_HOST', 'localhost')
+        port = int(os.getenv('FALKORDB_PORT', 6379))
+        password = os.getenv('FALKORDB_PASSWORD', None)
         
-        # Connect
-        self.db = FalkorDB(host=CLOUD_HOST, port=CLOUD_PORT, password=CLOUD_PASSWORD)
+        self.db = FalkorDB(host=host, port=port, password=password)
         self.graph = self.db.select_graph('SpotifyGraph')
 
     def save_playlist(self, playlist: Playlist) -> None:

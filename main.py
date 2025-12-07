@@ -4,6 +4,10 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from spotify_graph.spiders.playlist_spider import PlaylistSpider
 import sync_youtube
+from dotenv import load_dotenv
+
+# Load env vars
+load_dotenv()
 
 def main():
     print("🚀 Spotify to YouTube Playlist Creator 🚀")

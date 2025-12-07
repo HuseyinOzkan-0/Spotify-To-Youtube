@@ -5,21 +5,28 @@ This advanced Python project scrapes a Spotify playlist using **Scrapy**, stores
 ## Features
 - **Scrapy Spider**: Custom spider to parse Spotify playlist pages.
 - **FalkorDB Integration**: Uses a Graph ORM to model relationships (Playlist -> Track -> Artist/Album).
+- **Secure Configuration**: Uses `.env` for credentials.
 - **Type Checking**: Full python type hinting and Dataclasses.
 - **Robustness**: Includes unit tests and error handling.
-- **Complexity**: Demonstrates advanced usage of scraping pipelines and graph databases.
 
 ## Prerequisites
 1.  **Python 3.8+**
 2.  **FalkorDB**: A running instance (Docker or Cloud).
-    -   Update credentials in `spotify_graph/orm.py`.
 3.  **YouTube API**: `client_secret.json` must be present in the root.
 
 ## Installation
-```bash
-pip install -r requirements.txt
-```
-*(Ensure you have `scrapy`, `falkordb`, `google-auth-oauthlib`, `google-api-python-client`, `spotipy` (legacy), `tqdm` installed)*
+1. Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2. Create a `.env` file in the root directory and add your FalkorDB credentials:
+    ```ini
+    FALKORDB_HOST=your-falkordb-host
+    FALKORDB_PORT=your-port
+    FALKORDB_PASSWORD=your-password
+    ```
+    *(A predefined `.env` is included for the class demo)*
 
 ## Usage
 Run the main entry point:
@@ -46,7 +53,3 @@ python main.py
 ```bash
 python -m unittest discover tests
 ```
-
-## Known Issues
-- Spotify's dynamic content requires a robust user-agent (configured).
-- YouTube API quotas are limited (approx 10,000 units/day).
