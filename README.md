@@ -85,3 +85,6 @@ python -m unittest discover tests
 *   Spotify Developer Account
 *   Google Cloud Project (YouTube Data API v3)
 *   FalkorDB Instance
+
+## ⚠️ Limitation
+*   YouTube API has a quota limit of 10,000 requests per day. This tool will automatically handle rate limiting and retry failed requests.
