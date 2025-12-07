@@ -1,60 +1,61 @@
-import sys
-import os
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
-from spotify_graph.spiders.playlist_spider import PlaylistSpider
-import sync_youtube
-from dotenv import load_dotenv
+"""
+Main CLI Entry Point.
 
-# Load env vars
-load_dotenv()
+Orchestrates the entire Spotify -> Database -> YouTube pipeline.
+Supports both interactive and command-line arguments.
+"""
+import argparse
+import sys
+import run_api
+import sync_youtube
 
 def main():
-    print("🚀 Spotify to YouTube Playlist Creator 🚀")
+    parser = argparse.ArgumentParser(description="Spotify to YouTube Playlist Converter")
+    parser.add_argument("url", nargs="?", help="Spotify Playlist URL")
+    parser.add_argument("--name", "-n", help="Name for the YouTube Playlist")
     
-    # 1. Ask for Spotify Playlist URL
-    # default for testing
-    default_url = "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
-    playlist_url = input(f"Enter Spotify Playlist URL [default: {default_url}]: ").strip()
-    if not playlist_url:
-        playlist_url = default_url
-
-    print(f"🕷️  Starting Scrapy Spider for {playlist_url}...")
+    args = parser.parse_args()
     
-    # Configure Scrapy settings programmatically to ensure they are loaded
-    # referencing the settings module we created
-    os.environ.setdefault('SCRAPY_SETTINGS_MODULE', 'spotify_graph.settings')
-    settings = get_project_settings()
+    # 1. Ingest from Spotify
+    print("\n" + "="*40)
+    print(" 🎵 STEP 1: IMPORT FROM SPOTIFY")
+    print("="*40)
     
-    process = CrawlerProcess(settings)
-    process.crawl(PlaylistSpider, url=playlist_url)
-    process.start() # This blocks until spider finishes
-
-    print("✅ Scraping and Database saving complete.")
-
-    # 2. Ask for YouTube Playlist Name
-    yt_name = input("Enter name for the new YouTube Playlist: ").strip()
-    if not yt_name:
-        print("❌ No name provided. Exiting.")
-        return
-
-    # 3. Sync to YouTube
-    # We essentially run the logic from sync_youtube.py
-    songs = sync_youtube.fetch_songs_from_db()
+    playlist_name = run_api.ingest_playlist(args.url)
     
-    if not songs:
-        print("⚠️  No songs found in FalkorDB to sync.")
-        return
-
-    print(f"🎵 Found {len(songs)} songs to sync.")
+    if not playlist_name:
+        print("❌ Spotify Import failed or was cancelled.")
+        sys.exit(1)
+        
+    print(f"\n✅ Playlist '{playlist_name}' ready for export.")
     
-    try:
+    # 2. Sync to YouTube
+    print("\n" + "="*40)
+    print(" 📺 STEP 2: EXPORT TO YOUTUBE")
+    print("="*40)
+    
+    # Determine YouTube Playlist Name
+    yt_name = args.name if args.name else playlist_name
+    
+    # Check if user wants to override name if not provided via CLI
+    if not args.name:
+        confirm = input(f"Use name '{yt_name}' for YouTube? [Y/n]: ").strip().lower()
+        if confirm == 'n':
+            yt_name = input("Enter new name: ").strip()
+    
+    # Run Sync
+    songs = sync_youtube.fetch_songs()
+    if songs:
         youtube = sync_youtube.get_authenticated_service()
-        pl_id = sync_youtube.create_playlist(youtube, yt_name)
-        sync_youtube.search_and_add(youtube, pl_id, songs)
-        print("🎉 All done! Enjoy your playlist.")
-    except Exception as e:
-        print(f"❌ An error occurred during YouTube sync: {e}")
+        # We need to expose create_pl and sync_songs or call shared logic
+        # Ideally sync_youtube should interpret 'yt_name'
+        
+        # Calling logic from sync_youtube directly:
+        pl_id = sync_youtube.create_pl(youtube, yt_name)
+        sync_youtube.sync_songs(youtube, pl_id, songs)
+        print("\n🎉 MISSION ACCOMPLISHED!")
+    else:
+        print("❌ No songs found to sync.")
 
 if __name__ == "__main__":
     main()

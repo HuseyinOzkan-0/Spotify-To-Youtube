@@ -1,3 +1,9 @@
+"""
+Domain Entities.
+
+Defines pure Python Dataclasses for Playlist, Track, Album, and Artist.
+Used to enforce type safety across the application.
+"""
 from dataclasses import dataclass, field
 from typing import List, Optional
 
